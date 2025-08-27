@@ -13,7 +13,7 @@ import re
 # -------------------------
 # Load ML model safely
 # -------------------------
-MODEL_PATH = r"C:\Users\g_dha\Downloads\CTS Hackathon\xgb_readmission_model.pkl"
+MODEL_PATH = "xgb_readmission_model.pkl"
 ml_model = None
 
 def load_ml_model(model_path):
@@ -31,7 +31,7 @@ ml_model = load_ml_model(MODEL_PATH)
 # -------------------------
 # Load dataset (cached)
 # -------------------------
-DB_PATH = r"C:\Users\g_dha\Downloads\CTS Hackathon\ehr_large.db"
+DB_PATH = "ehr_large.db"
 
 @st.cache_data
 def load_patients_from_db(db_path):
@@ -287,5 +287,6 @@ if st.button("Analyze Patient"):
         file_name=f"{patient_row.get('name','unknown')}_summary.pdf",
         mime="application/pdf"
     )
+
 
 
