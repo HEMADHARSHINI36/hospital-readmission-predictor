@@ -5,6 +5,7 @@ import sqlite3
 import pandas as pd
 import numpy as np
 from fpdf import FPDF
+from io import BytesIO
 import pickle
 import os
 import re
@@ -161,7 +162,7 @@ def generate_structured_report(row):
 # -------------------------
 # PDF Generation
 # -------------------------
-def create_patient_pdf(patient_row, summary_text):
+def create_patient_pdf_bytes(patient_row, summary_text):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", "B", 16)
@@ -176,9 +177,10 @@ def create_patient_pdf(patient_row, summary_text):
     pdf.ln(5)
     pdf.multi_cell(0, 8, "AI-Generated Summary:")
     pdf.multi_cell(0, 8, summary_text)
-    file_name = f"{patient_row.get('patient_id','unknown')}_summary.pdf"
-    pdf.output(file_name)
-    return file_name
+    
+    # Generate PDF as bytes
+    pdf_bytes = pdf.output(dest='S').encode('latin1')  # dest='S' returns PDF as string
+    return pdf_bytes
 
 # -------------------------
 # Streamlit UI
@@ -276,14 +278,14 @@ if st.button("Analyze Patient"):
 
     st.text_area("Summary", value=summary_text, height=300)
 
-    # PDF download
-    pdf_file = create_patient_pdf(patient_row, summary_text)
+    # PDF download button
+    pdf_bytes = create_patient_pdf_bytes(patient_row, summary_text)
+
     st.download_button(
         label="Download Patient Summary PDF",
-        data=pdf_file,
+        data=pdf_bytes,
         file_name=f"{patient_row.get('name','unknown')}_summary.pdf",
         mime="application/pdf"
     )
-
 
 
