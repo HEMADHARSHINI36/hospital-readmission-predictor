@@ -3,4 +3,6 @@ pandas
 numpy
 fpdf
 xgboost
-
+altair           # for charts and visualizations
+shap             # for SHAP feature contributions
+matplotlib       # used for plotting SHAP charts
