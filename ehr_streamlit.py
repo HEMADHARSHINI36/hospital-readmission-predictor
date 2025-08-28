@@ -1,3 +1,5 @@
+# risk modified
+
 # ehr_streamlit_refined_ml_optimized.py
 
 import streamlit as st
@@ -9,6 +11,8 @@ from io import BytesIO
 import pickle
 import os
 import re
+import altair as alt
+
 
 # -------------------------
 # Load ML model safely
@@ -25,7 +29,7 @@ def load_ml_model(model_path):
     else:
         st.sidebar.warning("⚠ ML model not found. Falling back to legacy calculations.")
         return None
-
+        
 ml_model = load_ml_model(MODEL_PATH)
 
 # -------------------------
@@ -203,11 +207,11 @@ patient_row = patients_df[patients_df["patient_id"] == selected_patient_id].iloc
 # -------------------------
 st.markdown("### Predictive Readmission Alert")
 if patient_row['readmit_flag'] == "High Risk":
-    st.markdown(f"<span style='color:red;font-weight:bold'>⚠ High-Risk of Readmission ({patient_row['readmit_prob']*100:.1f}%)</span>", unsafe_allow_html=True)
+    st.markdown(f"<span style='color:red;font-weight:bold'>⚠ High-Risk ({patient_row['readmit_prob']*100:.1f}%)</span>", unsafe_allow_html=True)
 elif patient_row['readmit_flag'] == "Moderate Risk":
-    st.markdown(f"<span style='color:orange;font-weight:bold'>⚠ Medium-Risk of Readmission ({patient_row['readmit_prob']*100:.1f}%)</span>", unsafe_allow_html=True)
+    st.markdown(f"<span style='color:orange;font-weight:bold'>⚠ Medium-Risk ({patient_row['readmit_prob']*100:.1f}%)</span>", unsafe_allow_html=True)
 else:
-    st.markdown(f"<span style='color:green;font-weight:bold'>Low Risk of Readmission ({patient_row['readmit_prob']*100:.1f}%)</span>", unsafe_allow_html=True)
+    st.markdown(f"<span style='color:green;font-weight:bold'>Low Risk ({patient_row['readmit_prob']*100:.1f}%)</span>", unsafe_allow_html=True)
 
 # -------------------------
 # Show patient details
@@ -225,10 +229,10 @@ if st.button("Analyze Patient"):
     st.markdown(f"Recommendation: {patient_row['recommendation']}")
 
     st.markdown("### Individual Patient Impact")
-    st.markdown(f"**Expected Money Saved:** ${patient_row['expected_saving']:,.2f}")
+    st.markdown(f"Expected Money Saved: ${patient_row['expected_saving']:,.2f}")
 
     st.markdown("### Overall Hospital Impact")
-    st.markdown(f"**Estimated Overall Savings:** ${overall_impact:,.2f}")
+    st.markdown(f"Estimated Overall Savings: ${overall_impact:,.2f}")
 
     report = generate_structured_report(patient_row)
 
@@ -252,7 +256,7 @@ if st.button("Analyze Patient"):
     st.markdown(sim_html, unsafe_allow_html=True)
 
 
-    st.markdown("### Predictive Readmission Alert")
+    st.markdown("### Possibility of Readmission")
     if patient_row['readmit_flag'] == "High Risk":
         st.markdown(f"<span style='color:red;font-weight:bold'>⚠ High-Risk of Readmission ({patient_row['readmit_prob']*100:.1f}%)</span>", unsafe_allow_html=True)
     elif patient_row['readmit_flag'] == "Medium Risk":
@@ -288,5 +292,34 @@ if st.button("Analyze Patient"):
         mime="application/pdf"
     )
 
+    # -------------------------
+    # SHAP Feature Contributions
+    # -------------------------
+    if ml_model:
+        import shap
+        import matplotlib.pyplot as plt
 
+        # Get model feature names
+        feature_cols = ml_model.get_booster().feature_names
+
+        # Ensure all features exist in patients_df
+        for col in feature_cols:
+            if col not in patients_df.columns:
+                patients_df[col] = 0  # fill missing features with 0
+
+        # Select features for this patient
+        X_patient = patients_df.loc[patients_df['patient_id'] == selected_patient_id, feature_cols]
+
+        # Create SHAP explainer
+        explainer = shap.TreeExplainer(ml_model)
+        shap_values = explainer.shap_values(X_patient)
+
+        # Convert to DataFrame for bar chart
+        shap_df = pd.DataFrame({
+            'Feature': feature_cols,
+            'Contribution': shap_values[0]  # first (and only) row
+        }).sort_values(by='Contribution', key=abs, ascending=False)
+
+        st.markdown("### Feature Contribution to Readmission Risk (SHAP)")
+        st.bar_chart(shap_df.set_index('Feature')['Contribution'])
 
