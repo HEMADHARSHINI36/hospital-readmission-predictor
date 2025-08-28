@@ -1,5 +1,3 @@
-# risk modified
-
 # ehr_streamlit_refined_ml_optimized.py
 
 import streamlit as st
@@ -196,11 +194,95 @@ st.sidebar.header("Hospital Parameters")
 total_patients = st.sidebar.number_input("Total patients monthly", value=max(1000, len(patients_df)), step=1)
 current_read_rate = st.sidebar.number_input("Current readmission rate (0-1)", value=0.15, step=0.01)
 
-# Patient selection
+# -------------------------
+# Patient Selection (Search + Dropdown)
+# -------------------------
+st.sidebar.subheader("🔍 Patient Selection")
+
+# Create dictionary {patient_id: name}
 patient_options = patients_df[['patient_id','name']].values.tolist()
 patient_dict = dict(patient_options)
-selected_patient_id = st.selectbox("Select patient", list(patient_dict.keys()), format_func=lambda x: patient_dict[x])
-patient_row = patients_df[patients_df["patient_id"] == selected_patient_id].iloc[0]
+
+# -------------------------
+# Patient Selection (Search + Dropdown, robust)
+# -------------------------
+st.sidebar.subheader("🔍 Patient Selection")
+
+# Prebuild lookups
+patient_ids = patients_df['patient_id'].tolist()
+patient_names = patients_df['name'].astype(str).tolist() if 'name' in patients_df.columns else [str(x) for x in patient_ids]
+id_to_name = dict(zip(patient_ids, patient_names))
+
+# Build a temporary normalized view for searching
+df_search = patients_df.copy()
+df_search['patient_id_str'] = df_search['patient_id'].astype(str)
+df_search['name_str'] = df_search['name'].astype(str) if 'name' in df_search.columns else df_search['patient_id_str']
+# Lowercase helpers for case-insensitive matching
+df_search['patient_id_str_l'] = df_search['patient_id_str'].str.lower()
+df_search['name_str_l'] = df_search['name_str'].str.lower()
+df_search['prefixed_id_l'] = ('patient_' + df_search['patient_id_str']).str.lower()
+
+# Search input
+q = st.text_input("Search Patient (ID or Name)", placeholder="e.g., 770, Patient_770, or patient name").strip()
+q_l = q.lower()
+
+selected_patient_id = None
+
+if q:
+    # 1) Try exact matches (ID, prefixed ID, or name)
+    exact_mask = (
+        (df_search['patient_id_str_l'] == q_l) |
+        (df_search['prefixed_id_l'] == q_l) |
+        (df_search['name_str_l'] == q_l)
+    )
+    exact_hits = df_search.loc[exact_mask]
+
+    if len(exact_hits) == 1:
+        selected_patient_id = exact_hits['patient_id'].iloc[0]
+        st.success(f"✅ Found exact match: {id_to_name.get(selected_patient_id, selected_patient_id)} (ID: {selected_patient_id})")
+    elif len(exact_hits) > 1:
+        # Multiple exact hits (rare) -> let user choose
+        st.info(f"Found {len(exact_hits)} exact matches. Please select one.")
+        options = exact_hits['patient_id'].tolist()
+        selected_patient_id = st.selectbox(
+            "Select matching patient",
+            options,
+            format_func=lambda pid: f"{id_to_name.get(pid, str(pid))} (ID: {pid})"
+        )
+    else:
+        # 2) Fuzzy / partial matches
+        partial_mask = (
+            df_search['patient_id_str_l'].str.contains(q_l, na=False) |
+            df_search['prefixed_id_l'].str.contains(q_l, na=False) |
+            df_search['name_str_l'].str.contains(q_l, na=False)
+        )
+        partial_hits = df_search.loc[partial_mask]
+
+        if len(partial_hits) >= 1:
+            st.info(f"Found {len(partial_hits)} match(es). Select from the list:")
+            options = partial_hits['patient_id'].tolist()
+            selected_patient_id = st.selectbox(
+                "Select matching patient",
+                options,
+                format_func=lambda pid: f"{id_to_name.get(pid, str(pid))} (ID: {pid})"
+            )
+        else:
+            st.warning("⚠️ No matching patient found. Showing full list below.")
+            selected_patient_id = st.selectbox(
+                "Select patient",
+                patient_ids,
+                format_func=lambda pid: id_to_name.get(pid, str(pid))
+            )
+else:
+    # No query -> show full dropdown
+    selected_patient_id = st.selectbox(
+        "Select patient",
+        patient_ids,
+        format_func=lambda pid: id_to_name.get(pid, str(pid))
+    )
+
+# Use the chosen patient_id to get the row
+patient_row = patients_df.loc[patients_df['patient_id'] == selected_patient_id].iloc[0]
 
 # -------------------------
 # Predictive Readmission Alert (Old Style)
@@ -248,13 +330,12 @@ if st.button("Analyze Patient"):
 
     st.markdown("### Simulation Results")
     sim_html = f"""
-    <div style="font-family: 'Arial', sans-serif; font-size:16px; color:white; line-height:1.5;">
+    <div style="font-family: 'Arial', sans-serif; font-size:16px; line-height:1.5;">
         <p><strong>Individual Patient Saving:</strong> ${patient_saving_sim:,.2f}</p>
         <p><strong>Hospital-wide Potential Savings:</strong> ${hospital_saving_sim:,.2f}</p>
     </div>
     """
     st.markdown(sim_html, unsafe_allow_html=True)
-
 
     st.markdown("### Possibility of Readmission")
     if patient_row['readmit_flag'] == "High Risk":
