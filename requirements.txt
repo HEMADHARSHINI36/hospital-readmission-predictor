@@ -7,3 +7,5 @@ altair
 shap
 xgboost
 ollama
+openai
+
