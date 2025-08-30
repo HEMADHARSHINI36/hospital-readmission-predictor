@@ -158,6 +158,7 @@ def generate_structured_report(row):
 # PDF Generation
 # -------------------------
 def create_patient_pdf_bytes(patient_row, summary_text):
+    FONT_PATH = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
     pdf = FPDF()
     pdf.add_page()
     pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
@@ -613,6 +614,7 @@ def generate_post_discharge_plan_safe(row):
 from fpdf import FPDF
 
 def create_pdf_from_text(patient_row, text, title="Post-Discharge Plan"):
+    FONT_PATH = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
     pdf = FPDF()
     pdf.add_page()
 
@@ -807,6 +809,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
