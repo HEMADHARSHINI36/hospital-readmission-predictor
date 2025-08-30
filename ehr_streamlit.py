@@ -615,22 +615,36 @@ import streamlit as st
 def generate_post_discharge_plan_safe(row):
     try:
         with st.spinner("Generating AI Post-Discharge Plan..."):
-            patient_info = f"Name: {row.get('name','Unknown')}, Age: {row.get('agefactor',0)}, Risk Score: {row.get('risk_score',0):.2f}%"
-            prompt = f"Generate a clinician-friendly post-discharge plan for the patient:\n{patient_info}"
+            patient_info = (
+                f"Name: {row.get('name','Unknown')}, "
+                f"Age: {row.get('agefactor',0)}, "
+                f"Risk Score: {row.get('risk_score',0):.2f}%"
+            )
+            prompt = (
+                "Generate a clinician-friendly post-discharge plan for the patient:\n"
+                + patient_info
+            )
 
-            # ✅ Pull token from secrets
+            # Retrieve HF token securely
             hf_token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
 
-            # Initialize client with token
             client = InferenceClient(
                 model="mistralai/Mistral-7B-Instruct-v0.1",
                 token=hf_token
             )
 
-            # Generate plan
-            response = client.text_generation(inputs=prompt, max_new_tokens=300)
+            # Use prompt as positional arg — no "inputs=" keyword
+            response = client.text_generation(prompt, max_new_tokens=300)
 
-            return response.strip() if isinstance(response, str) else str(response)
+            # Remove surrounding quotes/brackets if present
+            if isinstance(response, list) and len(response) > 0:
+                text = response[0]
+            elif isinstance(response, str):
+                text = response
+            else:
+                text = str(response)
+
+            return text.strip()
 
     except Exception as e:
         return f"❌ Could not generate plan: {e}"
@@ -841,6 +855,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
