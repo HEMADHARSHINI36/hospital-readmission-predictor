@@ -611,22 +611,20 @@ def create_pdf_from_text(patient_row, text, title="Post-Discharge Plan"):
     pdf = FPDF()
     pdf.add_page()
     
-    # Title
     pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, title, ln=True, align="C")
     pdf.ln(10)
 
-    # Patient info
     pdf.set_font("Arial", "", 12)
     pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
     pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
     pdf.multi_cell(0, 8, f"Disease: {patient_row.get('disease','Unknown')}")
     pdf.ln(5)
 
-    # Main text
     pdf.multi_cell(0, 8, text)
 
-    return pdf.output(dest='S').encode('latin1')
+    # Return bytes directly, no encoding
+    return pdf.output(dest='S').encode('utf-8')
 
 with tab5:
     st.subheader("AI-Generated Post-Discharge Plan")
@@ -802,3 +800,4 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
