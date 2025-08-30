@@ -157,23 +157,35 @@ def generate_structured_report(row):
 # -------------------------
 # PDF Generation
 # -------------------------
+import re
+from fpdf import FPDF
+
 def create_patient_pdf_bytes(patient_row, summary_text):
+    # Replace non-latin1 characters with a placeholder
+    safe_summary = re.sub(r'[^\x00-\xFF]', '?', str(summary_text))
+
     pdf = FPDF()
     pdf.add_page()
+    
+    # Title
     pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, "Patient Risk Summary", ln=True, align="C")
-    pdf.set_font("Arial", "", 12)
     pdf.ln(10)
+
+    # Patient info
+    pdf.set_font("Arial", "", 12)
     pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
     pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
     pdf.multi_cell(0, 8, f"Disease: {patient_row.get('disease','Unknown')}")
     pdf.multi_cell(0, 8, f"Risk Score: {patient_row.get('risk_score',0):.2f}% ({patient_row.get('risk_level','LOW')})")
     pdf.multi_cell(0, 8, f"Recommendation: {patient_row.get('recommendation','Standard follow-up')}")
     pdf.ln(5)
-    pdf.multi_cell(0, 8, "AI-Generated Summary:")
-    pdf.multi_cell(0, 8, summary_text)
-    return pdf.output(dest='S').encode('latin1')
 
+    # Summary text
+    pdf.multi_cell(0, 8, safe_summary)
+
+    # Return PDF bytes
+    return pdf.output(dest='S').encode('latin1', errors='replace')
 
 # -------------------------
 # Streamlit UI
@@ -606,25 +618,35 @@ def generate_post_discharge_plan_safe(row):
             return response['message']['content'].strip()
     except Exception as e:
         return f"❌ Could not generate plan: {e}"
+        
+import re
+from fpdf import FPDF
 
 def create_pdf_from_text(patient_row, text, title="Post-Discharge Plan"):
+    # Replace non-latin1 characters (like emojis) with a placeholder
+    safe_text = re.sub(r'[^\x00-\xFF]', '?', str(text))
+
     pdf = FPDF()
     pdf.add_page()
     
+    # Title
     pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, title, ln=True, align="C")
     pdf.ln(10)
 
+    # Patient info
     pdf.set_font("Arial", "", 12)
     pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
     pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
     pdf.multi_cell(0, 8, f"Disease: {patient_row.get('disease','Unknown')}")
     pdf.ln(5)
 
-    pdf.multi_cell(0, 8, text)
+    # Discharge plan text
+    pdf.multi_cell(0, 8, safe_text)
 
-    # Return bytes directly, no encoding
-    return pdf.output(dest='S').encode('utf-8')
+    # Return PDF bytes
+    return pdf.output(dest='S').encode('latin1', errors='replace')
+
 
 with tab5:
     st.subheader("AI-Generated Post-Discharge Plan")
@@ -800,4 +822,5 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
