@@ -172,7 +172,8 @@ def create_patient_pdf_bytes(patient_row, summary_text):
     pdf.ln(5)
     pdf.multi_cell(0, 8, "AI-Generated Summary:")
     pdf.multi_cell(0, 8, summary_text)
-    return pdf.output(dest='S').encode('latin1')
+    return pdf.output(dest='S').encode('utf-8')
+
 
 
 # -------------------------
@@ -802,3 +803,4 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
