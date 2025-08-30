@@ -627,7 +627,7 @@ def create_pdf_from_text(patient_row, text, title="Post-Discharge Plan"):
     # Main text
     pdf.multi_cell(0, 8, text)
 
-    return pdf.output(dest='S').encode('latin1')
+    return pdf.output(dest='S').encode('utf-8')
 
 with tab5:
     st.subheader("AI-Generated Post-Discharge Plan")
@@ -803,4 +803,5 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
