@@ -610,84 +610,84 @@ with tab4:
 # Tab 5: Post-Discharge Plan
 # -------------------------
 
-from huggingface_hub import InferenceClient
-import streamlit as st
+# from huggingface_hub import InferenceClient
+# import streamlit as st
 
-# Initialize client once using token from secrets
-hf_token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
-hf_client = InferenceClient(token=hf_token)
+# # Initialize client once using token from secrets
+# hf_token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
+# hf_client = InferenceClient(token=hf_token)
 
-def generate_post_discharge_plan(prompt: str, max_tokens: int = 300):
-    try:
-        # Correct: pass prompt as first positional argument, not 'inputs'
-        response = hf_client.text_generation(
-            prompt,  # <-- positional
-            model="mistralai/Mistral-7B-Instruct-v0.1",
-            max_new_tokens=max_tokens
-        )
+# def generate_post_discharge_plan(prompt: str, max_tokens: int = 300):
+#     try:
+#         # Correct: pass prompt as first positional argument, not 'inputs'
+#         response = hf_client.text_generation(
+#             prompt,  # <-- positional
+#             model="mistralai/Mistral-7B-Instruct-v0.1",
+#             max_new_tokens=max_tokens
+#         )
         
-        # Parse the response (depends on model format)
-        if isinstance(response, list) and "generated_text" in response[0]:
-            return response[0]["generated_text"]
-        elif isinstance(response, dict) and "generated_text" in response:
-            return response["generated_text"]
-        else:
-            return str(response)
+#         # Parse the response (depends on model format)
+#         if isinstance(response, list) and "generated_text" in response[0]:
+#             return response[0]["generated_text"]
+#         elif isinstance(response, dict) and "generated_text" in response:
+#             return response["generated_text"]
+#         else:
+#             return str(response)
 
-    except Exception as e:
-        return f"❌ Hugging Face generation failed: {e}"
+#     except Exception as e:
+#         return f"❌ Hugging Face generation failed: {e}"
 
         
-import re
-from fpdf import FPDF
+# import re
+# from fpdf import FPDF
 
-def create_pdf_from_text(patient_row, text, title="Post-Discharge Plan"):
-    # Replace non-latin1 characters (like emojis) with a placeholder
-    safe_text = re.sub(r'[^\x00-\xFF]', '?', str(text))
+# def create_pdf_from_text(patient_row, text, title="Post-Discharge Plan"):
+#     # Replace non-latin1 characters (like emojis) with a placeholder
+#     safe_text = re.sub(r'[^\x00-\xFF]', '?', str(text))
 
-    pdf = FPDF()
-    pdf.add_page()
+#     pdf = FPDF()
+#     pdf.add_page()
     
-    # Title
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, title, ln=True, align="C")
-    pdf.ln(10)
+#     # Title
+#     pdf.set_font("Arial", "B", 16)
+#     pdf.cell(0, 10, title, ln=True, align="C")
+#     pdf.ln(10)
 
-    # Patient info
-    pdf.set_font("Arial", "", 12)
-    pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
-    pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
-    pdf.multi_cell(0, 8, f"Disease: {patient_row.get('disease','Unknown')}")
-    pdf.ln(5)
+#     # Patient info
+#     pdf.set_font("Arial", "", 12)
+#     pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
+#     pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
+#     pdf.multi_cell(0, 8, f"Disease: {patient_row.get('disease','Unknown')}")
+#     pdf.ln(5)
 
-    # Discharge plan text
-    pdf.multi_cell(0, 8, safe_text)
+#     # Discharge plan text
+#     pdf.multi_cell(0, 8, safe_text)
 
-    # Return PDF bytes
-    return pdf.output(dest='S').encode('latin1', errors='replace')
+#     # Return PDF bytes
+#     return pdf.output(dest='S').encode('latin1', errors='replace')
 
 
-with tab5:
-    st.subheader("AI-Generated Post-Discharge Plan")
+# with tab5:
+#     st.subheader("AI-Generated Post-Discharge Plan")
     
-    prompt = (
-        f"Generate a clinician-friendly post-discharge plan for the patient:\n"
-        f"Name: {patient_row.get('name','Unknown')}, "
-        f"Age: {patient_row.get('agefactor',0)}, "
-        f"Risk Score: {patient_row.get('risk_score',0):.2f}%"
-    )
+#     prompt = (
+#         f"Generate a clinician-friendly post-discharge plan for the patient:\n"
+#         f"Name: {patient_row.get('name','Unknown')}, "
+#         f"Age: {patient_row.get('agefactor',0)}, "
+#         f"Risk Score: {patient_row.get('risk_score',0):.2f}%"
+#     )
     
-    discharge_plan = generate_post_discharge_plan(prompt)
+#     discharge_plan = generate_post_discharge_plan(prompt)
     
-    st.text_area("Plan", value=discharge_plan, height=400)
+#     st.text_area("Plan", value=discharge_plan, height=400)
     
-    pdf_bytes = create_pdf_from_text(patient_row, discharge_plan, title="Post-Discharge Plan")
-    st.download_button(
-        "⬇ Download PDF",
-        data=pdf_bytes,
-        file_name=f"{patient_row.get('name','unknown')}_discharge_plan.pdf",
-        mime="application/pdf"
-    )
+#     pdf_bytes = create_pdf_from_text(patient_row, discharge_plan, title="Post-Discharge Plan")
+#     st.download_button(
+#         "⬇ Download PDF",
+#         data=pdf_bytes,
+#         file_name=f"{patient_row.get('name','unknown')}_discharge_plan.pdf",
+#         mime="application/pdf"
+#     )
 
 # -------------------------
 # Root-Cause Explorer Tab
@@ -856,6 +856,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
