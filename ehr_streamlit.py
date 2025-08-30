@@ -157,51 +157,22 @@ def generate_structured_report(row):
 # -------------------------
 # PDF Generation
 # -------------------------
-import os
-from fpdf import FPDF
-import streamlit as st
-
-# Make sure DejaVuSans.ttf is in the same folder as this script
-FONT_PATH = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
-def create_patient_pdf_bytes(patient_row, summary_text, title="Patient Summary"):
-    """
-    Create a PDF summary of patient info and AI report.
-    Returns PDF bytes (UTF-8 encoded) or None if fails.
-    """
-    try:
-        pdf = FPDF()
-        pdf.add_page()
-
-        # Add Unicode font
-        if os.path.exists(FONT_PATH):
-            pdf.add_font("DejaVu", "", FONT_PATH, uni=True)
-        else:
-            st.warning(f"Font not found at {FONT_PATH}. Using default font.")
-            pdf.set_font("Arial", "", 12)
-
-        pdf.set_font("DejaVu", "B", 16)
-        pdf.cell(0, 10, title, ln=True, align="C")
-        pdf.ln(10)
-
-        pdf.set_font("DejaVu", "", 12)
-        pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
-        pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
-        pdf.multi_cell(0, 8, f"Disease: {patient_row.get('disease','Unknown')}")
-        pdf.multi_cell(0, 8, f"Risk Score: {patient_row.get('risk_score',0):.2f}% ({patient_row.get('risk_level','LOW')})")
-        pdf.multi_cell(0, 8, f"Recommendation: {patient_row.get('recommendation','Standard follow-up')}")
-        pdf.ln(5)
-
-        pdf.multi_cell(0, 8, summary_text)
-
-        # UTF-8 encoding
-        return pdf.output(dest='S').encode('utf-8')
-
-    except Exception as e:
-        st.error(f"Failed to generate PDF: {e}")
-        return None
-
-
-
+def create_patient_pdf_bytes(patient_row, summary_text):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, "Patient Risk Summary", ln=True, align="C")
+    pdf.set_font("Arial", "", 12)
+    pdf.ln(10)
+    pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
+    pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
+    pdf.multi_cell(0, 8, f"Disease: {patient_row.get('disease','Unknown')}")
+    pdf.multi_cell(0, 8, f"Risk Score: {patient_row.get('risk_score',0):.2f}% ({patient_row.get('risk_level','LOW')})")
+    pdf.multi_cell(0, 8, f"Recommendation: {patient_row.get('recommendation','Standard follow-up')}")
+    pdf.ln(5)
+    pdf.multi_cell(0, 8, "AI-Generated Summary:")
+    pdf.multi_cell(0, 8, summary_text)
+    return pdf.output(dest='S').encode('latin1')
 
 
 # -------------------------
@@ -636,46 +607,32 @@ def generate_post_discharge_plan_safe(row):
     except Exception as e:
         return f"❌ Could not generate plan: {e}"
 
-from fpdf import FPDF
+def create_pdf_from_text(patient_row, text, title="Post-Discharge Plan"):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Title
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, title, ln=True, align="C")
+    pdf.ln(10)
 
-def create_post_discharge_pdf_bytes(patient_row, discharge_text, title="Post-Discharge Plan"):
-    """
-    PDF for AI-generated post-discharge plan.
-    """
-    try:
-        pdf = FPDF()
-        pdf.add_page()
+    # Patient info
+    pdf.set_font("Arial", "", 12)
+    pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
+    pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
+    pdf.multi_cell(0, 8, f"Disease: {patient_row.get('disease','Unknown')}")
+    pdf.ln(5)
 
-        if os.path.exists(FONT_PATH):
-            pdf.add_font("DejaVu", "", FONT_PATH, uni=True)
-        else:
-            st.warning(f"Font not found at {FONT_PATH}. Using default font.")
-            pdf.set_font("Arial", "", 12)
+    # Main text
+    pdf.multi_cell(0, 8, text)
 
-        pdf.set_font("DejaVu", "B", 16)
-        pdf.cell(0, 10, title, ln=True, align="C")
-        pdf.ln(10)
-
-        pdf.set_font("DejaVu", "", 12)
-        pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
-        pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
-        pdf.multi_cell(0, 8, f"Disease: {patient_row.get('disease','Unknown')}")
-        pdf.ln(5)
-
-        pdf.multi_cell(0, 8, discharge_text)
-
-        return pdf.output(dest='S').encode('utf-8')
-
-    except Exception as e:
-        st.error(f"Failed to generate post-discharge PDF: {e}")
-        return None  
-
+    return pdf.output(dest='S').encode('latin1')
 
 with tab5:
     st.subheader("AI-Generated Post-Discharge Plan")
     discharge_plan = generate_post_discharge_plan_safe(patient_row)
     st.text_area("Plan", value=discharge_plan, height=400)
-    pdf_bytes = create_post_discharge_pdf_bytes(patient_row, discharge_plan, title="Post-Discharge Plan")
+    pdf_bytes = create_pdf_from_text(patient_row, discharge_plan, title="Post-Discharge Plan")
     st.download_button("⬇ Download PDF", data=pdf_bytes, file_name=f"{patient_row.get('name','unknown')}_discharge_plan.pdf", mime="application/pdf")
 
 # -------------------------
@@ -845,8 +802,3 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
-
-
-
-
-
