@@ -2,7 +2,8 @@ streamlit
 pandas
 numpy
 fpdf
+plotly
+altair
+shap
 xgboost
-altair           # for charts and visualizations
-shap             # for SHAP feature contributions
-matplotlib       # used for plotting SHAP charts
+ollama
