@@ -609,6 +609,22 @@ with tab4:
 # -------------------------
 # Tab 5: Post-Discharge Plan
 # -------------------------
+import streamlit as st
+from huggingface_hub import InferenceClient
+
+def test_hf_connection():
+    try:
+        token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
+        client = InferenceClient(
+            model="mistralai/Mistral-7B-Instruct-v0.1",
+            token=token
+        )
+        response = client.text_generation("Hello, Hugging Face!", max_new_tokens=20)
+        st.success("✅ Hugging Face API is connected!")
+        st.write("Response:", response)
+    except Exception as e:
+        st.error(f"❌ Hugging Face API connection failed: {e}")
+
 from huggingface_hub import InferenceClient
 import streamlit as st
 
@@ -847,6 +863,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
