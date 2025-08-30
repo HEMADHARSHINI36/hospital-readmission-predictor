@@ -610,6 +610,7 @@ with tab4:
 # Tab 5: Post-Discharge Plan
 # -------------------------
 from huggingface_hub import InferenceClient
+import streamlit as st
 
 def generate_post_discharge_plan_safe(row):
     try:
@@ -617,16 +618,23 @@ def generate_post_discharge_plan_safe(row):
             patient_info = f"Name: {row.get('name','Unknown')}, Age: {row.get('agefactor',0)}, Risk Score: {row.get('risk_score',0):.2f}%"
             prompt = f"Generate a clinician-friendly post-discharge plan for the patient:\n{patient_info}"
 
-            # Initialize client (requires HF API token in env)
-            client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.1")
+            # ✅ Pull token from secrets
+            hf_token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
 
-            # Correct usage with `inputs=`
+            # Initialize client with token
+            client = InferenceClient(
+                model="mistralai/Mistral-7B-Instruct-v0.1",
+                token=hf_token
+            )
+
+            # Generate plan
             response = client.text_generation(inputs=prompt, max_new_tokens=300)
 
-            # response is a string in new API
             return response.strip() if isinstance(response, str) else str(response)
+
     except Exception as e:
         return f"❌ Could not generate plan: {e}"
+
 
 
         
@@ -833,6 +841,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
