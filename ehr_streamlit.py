@@ -278,12 +278,11 @@ st.markdown(
 # -------------------------
 # Tabs
 # -------------------------
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Risk Assessment",
     "🏥 Penalty Reduction",
     "📝 AI Summary",
     "🔬 SHAP Analysis",
-    "📋 Post-Discharge Plan",
     "📊 Root-Cause Explorer"
 ])
 
@@ -692,7 +691,7 @@ with tab4:
 # -------------------------
 # Root-Cause Explorer Tab
 # -------------------------
-with tab6:
+with tab5:
     st.subheader("Readmission Root-Cause Explorer")
 
     # shap_values_df should be prepared from your existing ML model
@@ -856,6 +855,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
