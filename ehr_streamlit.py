@@ -610,27 +610,30 @@ with tab4:
 # Tab 5: Post-Discharge Plan
 # -------------------------
 
-from huggingface_hub import InferenceClient
+ffrom huggingface_hub import InferenceClient
+import streamlit as st
 
-# Initialize client once (token from secrets)
+# Initialize client once using token from secrets
 hf_token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
 hf_client = InferenceClient(token=hf_token)
 
-# Example: text generation
 def generate_post_discharge_plan(prompt: str, max_tokens: int = 300):
     try:
+        # Correct: pass prompt as first positional argument, not 'inputs'
         response = hf_client.text_generation(
+            prompt,  # <-- positional
             model="mistralai/Mistral-7B-Instruct-v0.1",
-            inputs=prompt,
             max_new_tokens=max_tokens
         )
-        # The response is usually a dict or list depending on model
+        
+        # Parse the response (depends on model format)
         if isinstance(response, list) and "generated_text" in response[0]:
             return response[0]["generated_text"]
         elif isinstance(response, dict) and "generated_text" in response:
             return response["generated_text"]
         else:
             return str(response)
+
     except Exception as e:
         return f"❌ Hugging Face generation failed: {e}"
 
@@ -853,6 +856,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
