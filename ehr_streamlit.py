@@ -609,55 +609,30 @@ with tab4:
 # -------------------------
 # Tab 5: Post-Discharge Plan
 # -------------------------
-import streamlit as st
+
 from huggingface_hub import InferenceClient
 
-def test_hf_connection():
+# Initialize client once (token from secrets)
+hf_token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
+hf_client = InferenceClient(token=hf_token)
+
+# Example: text generation
+def generate_post_discharge_plan(prompt: str, max_tokens: int = 300):
     try:
-        token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
-        client = InferenceClient(
+        response = hf_client.text_generation(
             model="mistralai/Mistral-7B-Instruct-v0.1",
-            token=token
+            inputs=prompt,
+            max_new_tokens=max_tokens
         )
-        response = client.text_generation("Hello, Hugging Face!", max_new_tokens=20)
-        st.success("✅ Hugging Face API is connected!")
-        st.write("Response:", response)
+        # The response is usually a dict or list depending on model
+        if isinstance(response, list) and "generated_text" in response[0]:
+            return response[0]["generated_text"]
+        elif isinstance(response, dict) and "generated_text" in response:
+            return response["generated_text"]
+        else:
+            return str(response)
     except Exception as e:
-        st.error(f"❌ Hugging Face API connection failed: {e}")
-
-from huggingface_hub import InferenceClient
-import streamlit as st
-
-def generate_post_discharge_plan_safe(row):
-    try:
-        with st.spinner("Generating AI Post-Discharge Plan..."):
-            patient_info = (
-                f"Name: {row.get('name','Unknown')}, "
-                f"Age: {row.get('agefactor',0)}, "
-                f"Risk Score: {row.get('risk_score',0):.2f}%"
-            )
-            prompt = (
-                "Generate a clinician-friendly post-discharge plan for the patient:\n"
-                + patient_info
-            )
-
-            # ✅ Use token from Streamlit secrets
-            hf_token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
-
-            client = InferenceClient(
-                model="mistralai/Mistral-7B-Instruct-v0.1",
-                token=hf_token
-            )
-
-            # ✅ Correct usage: prompt as first argument
-            response = client.text_generation(prompt, max_new_tokens=300)
-
-            return response.strip() if isinstance(response, str) else str(response)
-
-    except Exception as e:
-        return f"❌ Could not generate plan: {e}"
-
-
+        return f"❌ Hugging Face generation failed: {e}"
 
         
 import re
@@ -691,10 +666,25 @@ def create_pdf_from_text(patient_row, text, title="Post-Discharge Plan"):
 
 with tab5:
     st.subheader("AI-Generated Post-Discharge Plan")
-    discharge_plan = generate_post_discharge_plan_safe(patient_row)
+    
+    prompt = (
+        f"Generate a clinician-friendly post-discharge plan for the patient:\n"
+        f"Name: {patient_row.get('name','Unknown')}, "
+        f"Age: {patient_row.get('agefactor',0)}, "
+        f"Risk Score: {patient_row.get('risk_score',0):.2f}%"
+    )
+    
+    discharge_plan = generate_post_discharge_plan(prompt)
+    
     st.text_area("Plan", value=discharge_plan, height=400)
+    
     pdf_bytes = create_pdf_from_text(patient_row, discharge_plan, title="Post-Discharge Plan")
-    st.download_button("⬇ Download PDF", data=pdf_bytes, file_name=f"{patient_row.get('name','unknown')}_discharge_plan.pdf", mime="application/pdf")
+    st.download_button(
+        "⬇ Download PDF",
+        data=pdf_bytes,
+        file_name=f"{patient_row.get('name','unknown')}_discharge_plan.pdf",
+        mime="application/pdf"
+    )
 
 # -------------------------
 # Root-Cause Explorer Tab
@@ -863,6 +853,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
