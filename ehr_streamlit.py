@@ -625,7 +625,7 @@ def generate_post_discharge_plan_safe(row):
                 + patient_info
             )
 
-            # Retrieve HF token securely
+            # ✅ Use token from Streamlit secrets
             hf_token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
 
             client = InferenceClient(
@@ -633,18 +633,10 @@ def generate_post_discharge_plan_safe(row):
                 token=hf_token
             )
 
-            # Use prompt as positional arg — no "inputs=" keyword
+            # ✅ Correct usage: prompt as first argument
             response = client.text_generation(prompt, max_new_tokens=300)
 
-            # Remove surrounding quotes/brackets if present
-            if isinstance(response, list) and len(response) > 0:
-                text = response[0]
-            elif isinstance(response, str):
-                text = response
-            else:
-                text = str(response)
-
-            return text.strip()
+            return response.strip() if isinstance(response, str) else str(response)
 
     except Exception as e:
         return f"❌ Could not generate plan: {e}"
@@ -855,6 +847,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
