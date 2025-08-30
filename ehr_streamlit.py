@@ -609,32 +609,18 @@ with tab4:
 # -------------------------
 # Tab 5: Post-Discharge Plan
 # -------------------------
-import openai
-import streamlit as st
-client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+from huggingface_hub import InferenceClient
 
 def generate_post_discharge_plan_safe(row):
     try:
         with st.spinner("Generating AI Post-Discharge Plan..."):
-            patient_info = f"""
-            Name: {row.get('name','Unknown')}
-            Age: {row.get('agefactor',0)}
-            Risk Score: {row.get('risk_score',0):.2f}% ({row.get('risk_level','LOW')})
-            Readmission Probability: {row.get('readmit_prob',0)*100:.1f}% ({row.get('readmit_flag','Low Risk')})
-            Disease: {row.get('disease','Unknown')}
-            """
+            patient_info = f"Name: {row.get('name','Unknown')}, Age: {row.get('agefactor',0)}, Risk Score: {row.get('risk_score',0):.2f}%"
+            prompt = f"Generate a clinician-friendly post-discharge plan for the patient:\n{patient_info}"
 
-            prompt = f"Generate a clinician-friendly post-discharge plan for this patient:\n{patient_info}"
+            client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.1")  # free community model
+            response = client.text_generation(prompt, max_new_tokens=300)
 
-            client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",  # fast + cheap model
-                messages=[
-                    {"role": "system", "content": "You are a clinical assistant. Write concise, safe discharge plans."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            return response.choices[0].message.content.strip()
+            return response.strip()
     except Exception as e:
         return f"❌ Could not generate plan: {e}"
 
@@ -842,6 +828,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
