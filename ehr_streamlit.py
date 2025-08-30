@@ -617,12 +617,17 @@ def generate_post_discharge_plan_safe(row):
             patient_info = f"Name: {row.get('name','Unknown')}, Age: {row.get('agefactor',0)}, Risk Score: {row.get('risk_score',0):.2f}%"
             prompt = f"Generate a clinician-friendly post-discharge plan for the patient:\n{patient_info}"
 
-            client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.1")  # free community model
-            response = client.text_generation(prompt, max_new_tokens=300)
+            # Initialize client (requires HF API token in env)
+            client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.1")
 
-            return response.strip()
+            # Correct usage with `inputs=`
+            response = client.text_generation(inputs=prompt, max_new_tokens=300)
+
+            # response is a string in new API
+            return response.strip() if isinstance(response, str) else str(response)
     except Exception as e:
         return f"❌ Could not generate plan: {e}"
+
 
         
 import re
@@ -828,6 +833,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
