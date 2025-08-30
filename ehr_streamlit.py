@@ -160,9 +160,10 @@ def generate_structured_report(row):
 def create_patient_pdf_bytes(patient_row, summary_text):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", "B", 16)
+    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
+    pdf.set_font("DejaVu", "B", 16)
     pdf.cell(0, 10, "Patient Risk Summary", ln=True, align="C")
-    pdf.set_font("Arial", "", 12)
+    pdf.set_font("DejaVu", "", 12)
     pdf.ln(10)
     pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
     pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
@@ -172,7 +173,8 @@ def create_patient_pdf_bytes(patient_row, summary_text):
     pdf.ln(5)
     pdf.multi_cell(0, 8, "AI-Generated Summary:")
     pdf.multi_cell(0, 8, summary_text)
-    return pdf.output(dest='S').encode('utf-8')
+    return pdf.output(dest='S').encode('latin1')
+
 
 
 
@@ -608,26 +610,28 @@ def generate_post_discharge_plan_safe(row):
     except Exception as e:
         return f"❌ Could not generate plan: {e}"
 
+from fpdf import FPDF
+
 def create_pdf_from_text(patient_row, text, title="Post-Discharge Plan"):
     pdf = FPDF()
     pdf.add_page()
-    
-    # Title
-    pdf.set_font("Arial", "B", 16)
+
+    # Add Unicode font
+    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
+    pdf.set_font("DejaVu", "B", 16)
     pdf.cell(0, 10, title, ln=True, align="C")
     pdf.ln(10)
 
-    # Patient info
-    pdf.set_font("Arial", "", 12)
+    pdf.set_font("DejaVu", "", 12)
     pdf.multi_cell(0, 8, f"Patient Name: {patient_row.get('name','Unknown')}")
     pdf.multi_cell(0, 8, f"Age: {patient_row.get('agefactor',0)}")
     pdf.multi_cell(0, 8, f"Disease: {patient_row.get('disease','Unknown')}")
     pdf.ln(5)
 
-    # Main text
     pdf.multi_cell(0, 8, text)
 
-    return pdf.output(dest='S').encode('utf-8')
+    return pdf.output(dest='S').encode('latin1')  # now works because of uni=True
+
 
 with tab5:
     st.subheader("AI-Generated Post-Discharge Plan")
@@ -803,5 +807,6 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
