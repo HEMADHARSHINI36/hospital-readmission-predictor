@@ -610,7 +610,7 @@ with tab4:
 # Tab 5: Post-Discharge Plan
 # -------------------------
 
-ffrom huggingface_hub import InferenceClient
+from huggingface_hub import InferenceClient
 import streamlit as st
 
 # Initialize client once using token from secrets
@@ -856,6 +856,7 @@ with tab6:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
