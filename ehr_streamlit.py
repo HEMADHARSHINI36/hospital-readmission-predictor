@@ -281,7 +281,7 @@ st.markdown(
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Risk Assessment",
     "🏥 Penalty Reduction",
-    "📝 AI Summary",
+    "📝 Patient Summary",
     "🔬 SHAP Analysis",
     "📊 Root-Cause Explorer"
 ])
@@ -421,7 +421,7 @@ with tab2:
 # Tab 3: AI Summary
 # -------------------------
 with tab3:
-    st.markdown("## 🤖 AI-Generated Patient Summary")
+    st.markdown("## 🤖 Patient Summary")
 
     # Generate structured report
     report = generate_structured_report(patient_row)
@@ -855,6 +855,7 @@ with tab5:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
