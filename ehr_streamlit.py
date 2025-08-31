@@ -191,7 +191,7 @@ def create_patient_pdf_bytes(patient_row, summary_text):
 # Streamlit UI
 # -------------------------
 st.set_page_config(layout="wide")
-st.title("🏥 Hospital EHR Patient Analysis")
+st.title("🏥 Hospital Readmission Prediction")
 
 st.sidebar.header("Hospital Parameters")
 total_patients = st.sidebar.number_input("Total patients monthly", value=max(1000, len(patients_df)), step=1)
@@ -855,6 +855,7 @@ with tab5:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
