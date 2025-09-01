@@ -86,8 +86,8 @@ overall_impact = hospital_impact(patients_df)
 # ML Readmission Prediction (batch)
 # -------------------------
 def assign_readmission_flag(prob):
-    if prob >= 0.7: return "Will be readmitted"
-    elif prob >= 0.4: return "May be readmitted"
+    if prob >= 0.8: return "Will be readmitted"
+    elif prob >= 0.65: return "May be readmitted"
     else: return "Will not be readmitted"
 
 if ml_model:
@@ -855,6 +855,7 @@ with tab5:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
