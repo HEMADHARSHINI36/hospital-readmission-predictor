@@ -60,7 +60,7 @@ patients_df['risk_score'] = 1 / (1 + np.exp(-patients_df['risk_score'])) * 100
 
 def assign_risk_level(risk_score):
     if risk_score >= 80: return "HIGH"
-    elif risk_score >= 60: return "MEDIUM"
+    elif risk_score >= 65: return "MEDIUM"
     else: return "LOW"
 
 def individual_savings(risk_score, cost_per_patient=15000, prevention_success_rate=0.7):
@@ -855,6 +855,7 @@ with tab5:
         root_cause_explorer(selected_patient_id, shap_values_df)
     else:
         st.info("Run the SHAP Analysis tab first to generate SHAP values for this patient.")
+
 
 
 
